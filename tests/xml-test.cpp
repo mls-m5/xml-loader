@@ -76,7 +76,9 @@ TEST_CASE("attributes") {
 	XmlDocument xmlDocument;
 
 	istringstream testStream(R"_(
-<root width="100" height="200">Content</root>
+<root width="100" height="200">
+	<child width="50" height="40"/>
+</root>
 )_");
 
 	xmlDocument.load(testStream);
@@ -86,6 +88,11 @@ TEST_CASE("attributes") {
 	ASSERT_EQ(xmlDocument.convertAttribute<int>("width"), 100);
 	ASSERT_EQ(xmlDocument.attribute("height", ""), "200");
 	ASSERT_EQ(xmlDocument.convertAttribute<int>("height"), 200);
+
+	auto child = xmlDocument.find("child");
+	ASSERT(child, "could not find child element");
+	ASSERT_EQ(child->attribute("width", ""), "50");
+	ASSERT_EQ(child->attribute("height", ""), "40");
 }
 
 

@@ -152,6 +152,10 @@ Token getNextToken(std::istream &stream){
 	return Token(ss.str(), mode);
 }
 
+std::string cite(std::string str) {
+	return "\"" + str + "\"";
+}
+
 Token parseData(istream &stream){
 	stringstream ss;
 
@@ -228,7 +232,7 @@ void XmlDocument::load(std::istream &stream) {
 						EXPECT_ERROR("=", token);
 					}
 					token = getNextToken(stream);
-					setAttribute(argumentName, token);
+					currentStructure->setAttribute(argumentName, token);
 					token = getNextToken(stream);
 				}
 				else {
@@ -304,6 +308,17 @@ void XmlDocument::load(std::istream &stream) {
 }
 
 void XmlDocument::save(std::ostream &stream) {
+	stream << "<?xml";
+	if (!version.empty()) {
+		stream << " version=" << cite(version);
+	}
+	if (!encoding.empty()) {
+		stream << " encoding=" << cite(encoding);
+	}
+	if (!standalone.empty()) {
+		stream << " standalone=" << cite(standalone);
+	}
+	stream << " ?>" << std::endl;
 	print(0, &stream);
 }
 
@@ -325,7 +340,7 @@ void XmlDom::print(int level, std::ostream *printTarget) {
 	*target << "<" << name;
 
 	for (const auto &it: attributes) {
-		*target << " " << it.first << "=" << it.second;
+		*target << " " << it.first << "=" << cite(it.second);
 	}
 
 	bool doIndent = size();
