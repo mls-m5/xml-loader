@@ -9,9 +9,9 @@ LIBS = #libs like -lGL
 all: ${TESTS}
 	git submodule update --init #pull all submodules from server
 
-%-test: %-test.cpp
-#xml-test: xml-test.cpp ../src/xmldocument.cpp
-	${CXX} ${CXXFLAGS} -o $@ $< ${LIBS} `grep -oP '(?<=//OBJECTS=).*' $<`
+#%-test: %-test.cpp
+xml-test: xml-test.cpp ../src/xmldocument.cpp ../include/xmldocument.h
+	${CXX} ${CXXFLAGS} -o $@ $< ${LIBS} `grep -oP '(?<=//OBJECTS=).*' $<` -g
 
 clean:
 	rm -f src/*.o

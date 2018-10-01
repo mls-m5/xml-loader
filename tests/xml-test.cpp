@@ -71,5 +71,42 @@ TEST_CASE("file-access"){
 	ASSERT(xmlDocument2.loadFile("test-out.xml"), "file not loaded");
 }
 
+
+TEST_CASE("attributes") {
+	XmlDocument xmlDocument;
+
+	istringstream testStream(R"_(
+<root width="100" height="200">Content</root>
+)_");
+
+	xmlDocument.load(testStream);
+
+	ASSERT_EQ(xmlDocument.name, "root");
+	ASSERT_EQ(xmlDocument.attribute("width", ""), "100");
+	ASSERT_EQ(xmlDocument.convertAttribute<int>("width"), 100);
+	ASSERT_EQ(xmlDocument.attribute("height", ""), "200");
+	ASSERT_EQ(xmlDocument.convertAttribute<int>("height"), 200);
+}
+
+
+TEST_CASE("Handle header") {
+	XmlDocument xmlDocument;
+
+	istringstream testStream(R"_(
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<root>Content</root>
+)_");
+
+	xmlDocument.load(testStream);
+
+	ASSERT_EQ(xmlDocument.name, "root");
+	ASSERT_EQ(xmlDocument.data, "Content");
+
+	ASSERT_EQ(xmlDocument.version, "1.0");
+	ASSERT_EQ(xmlDocument.encoding, "utf-8");
+	ASSERT_EQ(xmlDocument.standalone, "yes");
+
+}
+
 TEST_SUIT_END
 

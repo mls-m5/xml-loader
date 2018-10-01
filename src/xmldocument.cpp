@@ -25,8 +25,10 @@ public:
 		Word,
 		StartTag,
 		StartEndTag,
+		StartHeaderTag,
 		EndStartTag,
 		EndTag,
+		EndHeaderTag,
 		Digit,
 		Literal,
 		CharacterData,
@@ -87,6 +89,10 @@ Token getNextToken(std::istream &stream){
 						ss.put(stream.get());
 						return Token(ss.str(), Token::StartEndTag);
 					}
+					if (stream.peek() == '?') {
+						ss.put(stream.get());
+						return Token(ss.str(), Token::StartHeaderTag);
+					}
 					else{
 						mode = Token::StartTag;
 					}
@@ -100,6 +106,11 @@ Token getNextToken(std::istream &stream){
 				case '>':
 					mode = Token::EndTag;
 					break;
+				case '?':
+					if (stream.peek() == '>') {
+						ss.put(stream.get());
+						return Token(ss.str(), Token::EndHeaderTag);
+					}
 				}
 				return Token(ss.str(), mode);
 			}
@@ -125,7 +136,10 @@ Token getNextToken(std::istream &stream){
 		case Token::Literal:
 			ss.put(c);
 			if (c == '"'){
-				return Token(ss.str(), mode);
+				auto str = ss.str();
+				str.erase(0, 1);
+				str.erase(str.length()-1);
+				return Token(str, mode);
 			}
 			break;
 		}
@@ -158,6 +172,7 @@ Token parseData(istream &stream){
 void XmlDocument::load(std::istream &stream) {
 	using std::cout;
 	using std::endl;
+	using std::cerr;
 #define EXPECT_ERROR(x, y) { cout << __FILE__ << ": expected token " << x << " not " << y << ". abort..." << endl; return; }
 #define EXPECT_TOKEN(x) if (token.type != x) EXPECT_ERROR(x, token.type);
 
@@ -209,9 +224,7 @@ void XmlDocument::load(std::istream &stream) {
 						EXPECT_ERROR("=", token);
 					}
 					token = getNextToken(stream);
-					auto newStructure = XmlDom(argumentName);
-					newStructure.data = token;
-					currentStructure->push_back(newStructure);
+					setAttribute(argumentName, token);
 					token = getNextToken(stream);
 				}
 				else {
@@ -240,6 +253,41 @@ void XmlDocument::load(std::istream &stream) {
 			}
 		}
 		break;
+		case Token::StartHeaderTag:
+		{
+			token = getNextToken(stream);
+			if (token != "xml") {
+				cerr << "in xml header, expected xml, got " << token << endl;
+			}
+			token = getNextToken(stream);
+			while(!stream.eof() && token.type != Token::EndHeaderTag) {
+				EXPECT_TOKEN(Token::Word);
+
+				string variableName = token;
+
+				token = getNextToken(stream);
+				if (token != "=") {
+					cerr << "Expected '=' got " << token << endl;
+				}
+
+				token = getNextToken(stream);
+				EXPECT_TOKEN(Token::Literal);
+				if (variableName == "version") {
+					version = token;
+				} else if (variableName == "encoding") {
+					encoding = token;
+				} else if (variableName == "standalone") {
+					standalone = token;
+				}
+
+				token = getNextToken(stream);
+			}
+			if (token.type != Token::EndHeaderTag) {
+				std::cerr << "reached end of xml file without end of header" << endl;
+			}
+
+			break;
+		}
 		default:
 			//Read data
 
@@ -271,6 +319,10 @@ void XmlDom::print(int level, std::ostream *printTarget) {
 
 	indent(level, target);
 	*target << "<" << name;
+
+	for (const auto &it: attributes) {
+		*target << " " << it.first << "=" << it.second;
+	}
 
 	bool doIndent = size();
 	if (size() || !data.empty()){
@@ -310,8 +362,8 @@ XmlDom* XmlDom::find(std::string name) {
 	return 0;
 }
 
-std::list<XmlDom*> XmlDom::findAll(std::string name) {
-	std::list<XmlDom*> retList;
+std::vector<XmlDom*> XmlDom::findAll(std::string name) {
+	std::vector<XmlDom*> retList;
 	for (auto &it: *this){
 		if (it.name.compare(name) == 0){
 			retList.push_back(&it);
