@@ -55,6 +55,10 @@ Token getNextToken(std::istream &stream){
 
 	Token::TokenType mode = Token::Space;
 
+	auto isAlphaOrSimilar = [](char c) {
+		return isalpha(c) || c == '-' || c == '_' || c == ':';
+	};
+
 	while (!stream.eof()){
 		c = stream.get();
 		switch (mode){
@@ -62,7 +66,7 @@ Token getNextToken(std::istream &stream){
 			if (isspace(c)){
 				continue;
 			}
-			else if(isalpha(c)){
+			else if(isAlphaOrSimilar(c)){
 				ss.put(c);
 				mode = Token::Word;
 				break;
@@ -125,7 +129,7 @@ Token getNextToken(std::istream &stream){
 			}
 			break;
 		case Token::Word:
-			if (isdigit(c) || isalpha(c)){
+			if (isdigit(c) || isAlphaOrSimilar(c)){
 				ss.put(c);
 			}
 			else{

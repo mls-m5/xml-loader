@@ -89,6 +89,23 @@ TEST_CASE("attributes") {
 }
 
 
+TEST_CASE("Non alphabetical characters in node names") {
+	XmlDocument xmlDocument;
+
+	istringstream testStream(R"_(
+<root_node width="100" height="200">
+	<second-node/>
+	<third:node/>
+</root_node>
+)_");
+
+	xmlDocument.load(testStream);
+
+	ASSERT(xmlDocument.name == "root_node", "could not find root_node");
+	ASSERT(xmlDocument.find("second-node"), "could not find second-node");
+	ASSERT(xmlDocument.find("third:node"), "could not find third:node");
+}
+
 TEST_CASE("Handle header") {
 	XmlDocument xmlDocument;
 
