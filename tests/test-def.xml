@@ -1,0 +1,15 @@
+
+<synthrack>
+	<controllers>
+		1 2 3 4
+	</controllers>
+
+	<instruments>
+		<osc>
+			<controllers>
+				1 43 3.4 5
+			</controllers>
+		</osc>
+		<data value="apa"/>
+	</instruments>
+</synthrack>
